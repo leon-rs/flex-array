@@ -188,6 +188,19 @@ impl<T, const CAP: usize> FlexArray<T, CAP> {
     }
 }
 
+impl<T, const CAP: usize> FlexArray<T, CAP> {
+    #[inline]
+    fn from_array<const N: usize>(array: [T; N]) -> Self {
+        let mut f = Self::new();
+        unsafe {
+            for b in array.into_iter().take(CAP) {
+                f.push_unchecked(b);
+            }
+        }
+        f
+    }
+}
+
 impl<T: Clone, const CAP: usize> FlexArray<T, CAP> {
     fn from_slice(s: &[T]) -> Self {
         struct DropGuard<'a, T, const CAP: usize> {
@@ -333,5 +346,12 @@ impl<T: Clone, const N: usize, const CAP: usize> From<&[T; N]> for FlexArray<T, 
     #[inline]
     fn from(value: &[T; N]) -> Self {
         Self::from_slice(value.as_slice())
+    }
+}
+
+impl<T, const N: usize, const CAP: usize> From<[T; N]> for FlexArray<T, CAP> {
+    #[inline]
+    fn from(value: [T; N]) -> Self {
+        Self::from_array(value)
     }
 }
