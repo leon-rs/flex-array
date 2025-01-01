@@ -373,3 +373,35 @@ impl<T, const N: usize, const CAP: usize> From<[T; N]> for FlexArray<T, CAP> {
         Self::from_array(value)
     }
 }
+
+__impl_partial_eq!([const CAP1: usize, const CAP2: usize] FlexArray<T, CAP1>, FlexArray<U, CAP2>);
+__impl_partial_eq!([const CAP: usize] FlexArray<T, CAP>, [U]);
+__impl_partial_eq!([const CAP: usize] FlexArray<T, CAP>, &[U]);
+__impl_partial_eq!([const CAP: usize] FlexArray<T, CAP>, &mut [U]);
+__impl_partial_eq!([const CAP: usize] [T], FlexArray<U, CAP>);
+__impl_partial_eq!([const CAP: usize] &[T], FlexArray<U, CAP>);
+__impl_partial_eq!([const CAP: usize] &mut [T], FlexArray<U, CAP>);
+__impl_partial_eq!([const CAP: usize, const N: usize] FlexArray<T, CAP>, [U; N]);
+__impl_partial_eq!([const CAP: usize, const N: usize] FlexArray<T, CAP>, &[U; N]);
+__impl_partial_eq!([const CAP: usize, const N: usize] FlexArray<T, CAP>, &mut [U; N]);
+__impl_partial_eq!([const CAP: usize, const N: usize] [T; N], FlexArray<U, CAP>);
+__impl_partial_eq!([const CAP: usize, const N: usize] &[T; N], FlexArray<U, CAP>);
+__impl_partial_eq!([const CAP: usize, const N: usize] &mut [T; N], FlexArray<U, CAP>);
+
+impl<T: PartialOrd, const CAP1: usize, const CAP2: usize> PartialOrd<FlexArray<T, CAP2>>
+    for FlexArray<T, CAP1>
+{
+    #[inline]
+    fn partial_cmp(&self, other: &FlexArray<T, CAP2>) -> Option<core::cmp::Ordering> {
+        PartialOrd::partial_cmp(&**self, &**other)
+    }
+}
+
+impl<T: Eq, const CAP: usize> Eq for FlexArray<T, CAP> {}
+
+impl<T: Ord, const CAP: usize> Ord for FlexArray<T, CAP> {
+    #[inline]
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        Ord::cmp(&**self, &**other)
+    }
+}
