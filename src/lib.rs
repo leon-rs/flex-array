@@ -224,11 +224,10 @@ impl<T: Clone, const CAP: usize> FlexArray<T, CAP> {
     fn clone_from_slice(&mut self, source: &[T]) {
         let len = source.len().min(self.capacity());
         self.truncate(len);
-        let (init, rest) = source.split_at(self.len());
+        let (init, tail) = source.split_at(self.len());
         self.deref_mut().clone_from_slice(init);
         unsafe {
-            let (tail, _) = rest.split_at(self.capacity() - self.len());
-            for b in tail {
+            for b in tail.iter().take(self.capacity() - self.len()) {
                 self.push_unchecked(b.clone());
             }
         }
