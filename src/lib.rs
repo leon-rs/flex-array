@@ -2,8 +2,9 @@
 #![cfg_attr(feature = "unstable", feature(dropck_eyepatch))]
 
 use core::{
-    ops::{Deref, DerefMut},
-    ptr, slice,
+    ops::{Deref, DerefMut, Index, IndexMut},
+    ptr,
+    slice::{self, SliceIndex},
 };
 
 use error::CapacityExceededError;
@@ -173,5 +174,21 @@ impl<T, const CAP: usize> DerefMut for FlexArray<T, CAP> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut_slice()
+    }
+}
+
+impl<T, I: SliceIndex<[T]>, const CAP: usize> Index<I> for FlexArray<T, CAP> {
+    type Output = I::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        Index::index(&**self, index)
+    }
+}
+
+impl<T, I: SliceIndex<[T]>, const CAP: usize> IndexMut<I> for FlexArray<T, CAP> {
+    #[inline]
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
+        IndexMut::index_mut(&mut **self, index)
     }
 }
