@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(feature = "unstable", feature(dropck_eyepatch))]
 
 use core::{ptr, slice};
 
@@ -7,6 +8,13 @@ use raw_buf::RawBuf;
 
 mod error;
 mod raw_buf;
+
+#[cfg(feature = "unstable")]
+#[path = "unstable_impls.rs"]
+mod impls;
+#[cfg(not(feature = "unstable"))]
+#[path = "stable_impls.rs"]
+mod impls;
 
 #[repr(C)]
 pub struct FlexArray<T, const CAP: usize> {
@@ -146,11 +154,5 @@ impl<T, const CAP: usize> FlexArray<T, CAP> {
             self.len -= 1;
             self.as_mut_ptr().add(self.len).read()
         }
-    }
-}
-
-impl<T, const CAP: usize> Drop for FlexArray<T, CAP> {
-    fn drop(&mut self) {
-        self.clear();
     }
 }
