@@ -3,6 +3,8 @@
 #![cfg_attr(feature = "unstable", feature(min_specialization))]
 
 use core::{
+    fmt,
+    hash::Hash,
     mem::MaybeUninit,
     ops::{Deref, DerefMut, Index, IndexMut},
     ptr,
@@ -262,5 +264,75 @@ impl<T, I: SliceIndex<[T]>, const CAP: usize> IndexMut<I> for FlexArray<T, CAP> 
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         IndexMut::index_mut(&mut **self, index)
+    }
+}
+
+impl<T: Hash, const CAP: usize> Hash for FlexArray<T, CAP> {
+    #[inline]
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        Hash::hash(&**self, state);
+    }
+}
+
+impl<T, const CAP: usize> Default for FlexArray<T, CAP> {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T: fmt::Debug, const CAP: usize> fmt::Debug for FlexArray<T, CAP> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&**self, f)
+    }
+}
+
+impl<T, const CAP: usize> AsRef<FlexArray<T, CAP>> for FlexArray<T, CAP> {
+    #[inline]
+    fn as_ref(&self) -> &FlexArray<T, CAP> {
+        self
+    }
+}
+
+impl<T, const CAP: usize> AsMut<FlexArray<T, CAP>> for FlexArray<T, CAP> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut FlexArray<T, CAP> {
+        self
+    }
+}
+
+impl<T, const CAP: usize> AsRef<[T]> for FlexArray<T, CAP> {
+    #[inline]
+    fn as_ref(&self) -> &[T] {
+        self
+    }
+}
+
+impl<T, const CAP: usize> AsMut<[T]> for FlexArray<T, CAP> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [T] {
+        self
+    }
+}
+
+impl<T: Clone, const CAP: usize> From<&[T]> for FlexArray<T, CAP> {
+    #[inline]
+    fn from(value: &[T]) -> Self {
+        Self::from_slice(value)
+    }
+}
+
+impl<T: Clone, const CAP: usize> From<&mut [T]> for FlexArray<T, CAP> {
+    #[inline]
+    fn from(value: &mut [T]) -> Self {
+        Self::from_slice(value)
+    }
+}
+
+impl<T: Clone, const N: usize, const CAP: usize> From<&[T; N]> for FlexArray<T, CAP> {
+    #[inline]
+    fn from(value: &[T; N]) -> Self {
+        Self::from_slice(value.as_slice())
     }
 }
