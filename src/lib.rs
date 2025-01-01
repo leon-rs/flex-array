@@ -15,6 +15,8 @@ use error::CapacityExceededError;
 use raw_buf::RawBuf;
 
 mod error;
+#[macro_use]
+mod macros;
 mod raw_buf;
 
 #[cfg(feature = "unstable")]
@@ -245,6 +247,22 @@ impl<T: Clone, const CAP: usize> FlexArray<T, CAP> {
             }
         }
     }
+}
+
+impl<T: Clone, const CAP: usize> Clone for FlexArray<T, CAP> {
+    __maybe_specialization!(
+        #[inline]
+        fn clone(&self) -> Self {
+            Self::from_slice(self)
+        }
+    );
+
+    __maybe_specialization!(
+        #[inline]
+        fn clone_from(&mut self, source: &Self) {
+            self.clone_from_slice(source);
+        }
+    );
 }
 
 impl<T, const CAP: usize> Deref for FlexArray<T, CAP> {
