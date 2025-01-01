@@ -1,7 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(feature = "unstable", feature(dropck_eyepatch))]
 
-use core::{ptr, slice};
+use core::{
+    ops::{Deref, DerefMut},
+    ptr, slice,
+};
 
 use error::CapacityExceededError;
 use raw_buf::RawBuf;
@@ -154,5 +157,21 @@ impl<T, const CAP: usize> FlexArray<T, CAP> {
             self.len -= 1;
             self.as_mut_ptr().add(self.len).read()
         }
+    }
+}
+
+impl<T, const CAP: usize> Deref for FlexArray<T, CAP> {
+    type Target = [T];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
+    }
+}
+
+impl<T, const CAP: usize> DerefMut for FlexArray<T, CAP> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.as_mut_slice()
     }
 }
