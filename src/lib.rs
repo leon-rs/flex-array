@@ -1,7 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(feature = "unstable", feature(dropck_eyepatch))]
+#![cfg_attr(feature = "unstable", feature(min_specialization))]
 
 use core::{
+    mem::MaybeUninit,
     ops::{Deref, DerefMut, Index, IndexMut},
     ptr,
     slice::{self, SliceIndex},
@@ -132,6 +134,29 @@ impl<T, const CAP: usize> FlexArray<T, CAP> {
             ptr::drop_in_place(elems);
         }
     }
+
+    #[inline]
+    pub fn spare_capacity_mut(&mut self) -> &mut [MaybeUninit<T>] {
+        unsafe {
+            slice::from_raw_parts_mut(
+                self.as_mut_ptr().add(self.len) as *mut MaybeUninit<T>,
+                self.buf.capacity() - self.len,
+            )
+        }
+    }
+
+    #[inline]
+    pub fn truncate(&mut self, len: usize) {
+        unsafe {
+            if self.len < len {
+                return;
+            }
+            let remaining_len = self.len - len;
+            let s = ptr::slice_from_raw_parts_mut(self.as_mut_ptr().add(len), remaining_len);
+            self.len = len;
+            ptr::drop_in_place(s);
+        }
+    }
 }
 
 impl<T: Copy, const CAP: usize> FlexArray<T, CAP> {
@@ -157,6 +182,53 @@ impl<T, const CAP: usize> FlexArray<T, CAP> {
         unsafe {
             self.len -= 1;
             self.as_mut_ptr().add(self.len).read()
+        }
+    }
+}
+
+impl<T: Clone, const CAP: usize> FlexArray<T, CAP> {
+    fn from_slice(s: &[T]) -> Self {
+        struct DropGuard<'a, T, const CAP: usize> {
+            array: &'a mut FlexArray<T, CAP>,
+            num_init: usize,
+        }
+        impl<'a, T, const CAP: usize> Drop for DropGuard<'a, T, CAP> {
+            #[inline]
+            fn drop(&mut self) {
+                unsafe {
+                    self.array.set_len(self.num_init);
+                }
+            }
+        }
+
+        let mut array = Self::new();
+        let mut guard = DropGuard {
+            array: &mut array,
+            num_init: 0,
+        };
+        let slots = guard.array.spare_capacity_mut();
+        for (i, b) in s.iter().enumerate().take(slots.len()) {
+            guard.num_init = i;
+            slots[i].write(b.clone());
+        }
+        let num_init = guard.num_init;
+        core::mem::forget(guard);
+        unsafe {
+            array.set_len(num_init);
+        }
+        array
+    }
+
+    fn clone_from_slice(&mut self, source: &[T]) {
+        let len = source.len().min(self.capacity());
+        self.truncate(len);
+        let (init, rest) = source.split_at(self.len());
+        self.deref_mut().clone_from_slice(init);
+        unsafe {
+            let (tail, _) = rest.split_at(self.capacity() - self.len());
+            for b in tail {
+                self.push_unchecked(b.clone());
+            }
         }
     }
 }

@@ -9,3 +9,29 @@ unsafe impl<#[may_dangle] T, const CAP: usize> Drop for FlexArray<T, CAP> {
         }
     }
 }
+
+impl<T: Clone, const CAP: usize> Clone for FlexArray<T, CAP> {
+    #[inline]
+    default fn clone(&self) -> Self {
+        Self::from_slice(self)
+    }
+
+    #[inline]
+    default fn clone_from(&mut self, source: &Self) {
+        self.clone_from_slice(source);
+    }
+}
+
+impl<T: Copy, const CAP: usize> Clone for FlexArray<T, CAP> {
+    #[inline]
+    fn clone(&self) -> Self {
+        unsafe { ptr::read(self) }
+    }
+
+    #[inline]
+    fn clone_from(&mut self, source: &Self) {
+        unsafe {
+            ptr::copy_nonoverlapping(source, self, 1);
+        }
+    }
+}
