@@ -5,7 +5,6 @@ use core::{ptr, slice};
 use error::CapacityExceededError;
 use raw_buf::RawBuf;
 
-#[macro_use]
 mod error;
 mod raw_buf;
 
@@ -98,7 +97,7 @@ impl<T, const CAP: usize> FlexArray<T, CAP> {
     #[inline]
     pub const fn push(&mut self, value: T) {
         if !self.has_space() {
-            panic!(error_message!());
+            panic!("attempted to push to a full FlexArray");
         }
         unsafe {
             self.push_unchecked(value);

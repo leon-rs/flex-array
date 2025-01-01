@@ -3,17 +3,13 @@ use core::{
     fmt::{Debug, Display},
 };
 
-macro_rules! error_message {
-    () => {
-        "attempted to push to a full FlexArray"
-    };
-}
-
 pub struct CapacityExceededError<T = ()> {
     value: T,
 }
 
 impl<T> CapacityExceededError<T> {
+    const ERROR_MESSAGE: &str = "capacity exceeded";
+
     #[inline]
     pub const fn new(value: T) -> Self {
         Self { value }
@@ -31,6 +27,10 @@ impl<T> CapacityExceededError<T> {
 }
 
 impl<T: Copy> CapacityExceededError<T> {
+    pub const fn const_into_inner(self) -> T {
+        self.value
+    }
+
     pub const fn const_simplify(self) -> CapacityExceededError {
         CapacityExceededError { value: () }
     }
@@ -38,13 +38,13 @@ impl<T: Copy> CapacityExceededError<T> {
 
 impl<T> Display for CapacityExceededError<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", error_message!())
+        write!(f, "{}", Self::ERROR_MESSAGE)
     }
 }
 
 impl<T> Debug for CapacityExceededError<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "CapacityExceededError: {}", error_message!())
+        write!(f, "CapacityExceededError: {}", Self::ERROR_MESSAGE)
     }
 }
 
